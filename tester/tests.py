@@ -11,7 +11,7 @@ def _make_result(name, response, passed, details=""):
         "status": "PASS" if passed else "FAIL",
         "latency_ms": response.get("latency_ms"),
         "details": details or (response.get("error") or "")
-    }
+    } 
 
 
 # ── A. Tests Contrat (fonctionnels) ──────────────────────────────────────────
