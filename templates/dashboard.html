@@ -73,9 +73,13 @@ tr:hover td{background:rgba(255,255,255,.015);}
 .bar-fill.ok{background:var(--grn);}
 .bar-fill.warn{background:var(--ylw);}
 .bar-fill.bad{background:var(--red);}
-
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin-bottom:1.4rem;}
+.chart-box{background:var(--sur);border:1px solid var(--bor);border-radius:10px;overflow:hidden;}
+.chart-body{padding:1.2rem;height:240px;display:flex;align-items:center;justify-content:center;}
 @media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr);} th,td{padding:.6rem .8rem;}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
 </head>
 <body>
 <div class="wrap">
@@ -122,7 +126,27 @@ tr:hover td{background:rgba(255,255,255,.015);}
       <div class="kpi-sub">p95 = {% if s.latency_ms_p95 %}{{ s.latency_ms_p95|int }} ms{% else %}—{% endif %}</div>
     </div>
   </div>
-
+  <!-- GRAPHES -->
+<div class="charts-grid">
+  <div class="chart-box">
+    <div class="sec-head">
+      <span class="sec-title">📈 Latence moyenne (historique)</span>
+      <span class="sec-meta">ms avg</span>
+    </div>
+    <div class="chart-body">
+      <canvas id="chartLatence"></canvas>
+    </div>
+  </div>
+  <div class="chart-box">
+    <div class="sec-head">
+      <span class="sec-title">✅ PASS / FAIL — dernier run</span>
+      <span class="sec-meta">{{ s.passed }} / {{ s.total }}</span>
+    </div>
+    <div class="chart-body">
+      <canvas id="chartPassFail"></canvas>
+    </div>
+  </div>
+</div>
   <!-- Résultats détaillés du dernier run -->
   <div class="section">
     <div class="sec-head">
@@ -192,5 +216,54 @@ tr:hover td{background:rgba(255,255,255,.015);}
   </div>
 
 </div>
+<script>
+  const history = {{ history | tojson }};
+  const labels   = history.map(r => r.timestamp.slice(0,16).replace('T',' ')).reverse();
+  const latences = history.map(r => r.summary.latency_ms_avg || 0).reverse();
+
+  new Chart(document.getElementById('chartLatence'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Latence avg (ms)',
+        data: latences,
+        borderColor: '#3dd6f5',
+        backgroundColor: 'rgba(61,214,245,0.08)',
+        borderWidth: 2,
+        pointBackgroundColor: '#3dd6f5',
+        pointRadius: 3,
+        tension: 0.4,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#4a6282', font: { family: 'IBM Plex Mono', size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#4a6282', font: { size: 9 }, maxRotation: 45, maxTicksLimit: 8 }, grid: { color: '#1a2740' } },
+        y: { ticks: { color: '#4a6282' }, grid: { color: '#1a2740' }, beginAtZero: true }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('chartPassFail'), {
+    type: 'doughnut',
+    data: {
+      labels: ['PASS', 'FAIL'],
+      datasets: [{
+        data: [{{ last.summary.passed if last else 0 }}, {{ last.summary.failed if last else 0 }}],
+        backgroundColor: ['rgba(0,212,170,0.8)', 'rgba(255,94,108,0.8)'],
+        borderColor: ['#00d4aa', '#ff5e6c'],
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: '#dce8f5', font: { family: 'IBM Plex Mono', size: 12 }, padding: 16 } } },
+      cutout: '65%'
+    }
+  });
+</script>
 </body>
 </html> 
