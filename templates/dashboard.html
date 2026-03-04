@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Monitor — Frankfurter</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080d14;--sur:#0f1826;--bor:#1a2740;--acc:#3dd6f5;--grn:#00d4aa;--red:#ff5e6c;--ylw:#ffc845;--txt:#dce8f5;--mut:#4a6282;--fmono:'IBM Plex Mono',monospace;--fsans:'IBM Plex Sans',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--txt);font-family:var(--fsans);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 20% 20%,rgba(61,214,245,.04) 0,transparent 50%),radial-gradient(circle at 80% 80%,rgba(0,212,170,.03) 0,transparent 50%);pointer-events:none;}
+.wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem;}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2.5rem;flex-wrap:wrap;gap:1rem;}
+.logo h1{font-family:var(--fmono);font-size:1.05rem;color:var(--acc);letter-spacing:.06em;}
+.logo p{font-size:.72rem;color:var(--mut);margin-top:.2rem;font-family:var(--fmono);}
+.actions{display:flex;gap:.6rem;flex-wrap:wrap;}
+.btn{padding:.5rem 1.1rem;border-radius:7px;font-family:var(--fmono);font-size:.78rem;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;transition:all .15s;}
+.btn-primary{background:var(--acc);color:#080d14;border:none;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(61,214,245,.35);}
+.btn-outline{background:transparent;color:var(--acc);border:1px solid rgba(61,214,245,.35);}
+.btn-outline:hover{background:rgba(61,214,245,.07);}
+.btn-green{background:var(--grn);color:#080d14;border:none;}
+.btn-green:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,212,170,.35);}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:.9rem;margin-bottom:2rem;}
+.kpi{background:var(--sur);border:1px solid var(--bor);border-radius:10px;padding:1.1rem 1.2rem;position:relative;overflow:hidden;}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi.blue::after{background:linear-gradient(90deg,var(--acc),transparent);}
+.kpi.green::after{background:linear-gradient(90deg,var(--grn),transparent);}
+.kpi.red::after{background:linear-gradient(90deg,var(--red),transparent);}
+.kpi.yellow::after{background:linear-gradient(90deg,var(--ylw),transparent);}
+.kpi-lbl{font-family:var(--fmono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);margin-bottom:.45rem;}
+.kpi-val{font-family:var(--fmono);font-size:1.7rem;font-weight:600;}
+.kpi.blue .kpi-val{color:var(--acc);}
+.kpi.green .kpi-val{color:var(--grn);}
+.kpi.red .kpi-val{color:var(--red);}
+.kpi.yellow .kpi-val{color:var(--ylw);}
+.kpi-sub{font-size:.68rem;color:var(--mut);margin-top:.2rem;}
+
+/* Sections */
+.section{background:var(--sur);border:1px solid var(--bor);border-radius:10px;margin-bottom:1.4rem;overflow:hidden;}
+.sec-head{padding:.85rem 1.3rem;border-bottom:1px solid var(--bor);display:flex;align-items:center;justify-content:space-between;}
+.sec-title{font-family:var(--fmono);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--acc);}
+.sec-meta{font-family:var(--fmono);font-size:.68rem;color:var(--mut);}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;}
+th{padding:.65rem 1.3rem;text-align:left;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-family:var(--fmono);border-bottom:1px solid var(--bor);}
+td{padding:.8rem 1.3rem;font-size:.82rem;border-bottom:1px solid rgba(26,39,64,.6);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.015);}
+
+.pill{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .65rem;border-radius:20px;font-size:.68rem;font-family:var(--fmono);font-weight:600;}
+.pill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.pill.pass{background:rgba(0,212,170,.12);color:var(--grn);border:1px solid rgba(0,212,170,.25);}
+.pill.fail{background:rgba(255,94,108,.12);color:var(--red);border:1px solid rgba(255,94,108,.25);}
+.mono{font-family:var(--fmono);font-size:.78rem;}
+.muted{color:var(--mut);}
+.lat-fast{color:var(--grn);font-family:var(--fmono);}
+.lat-slow{color:var(--ylw);font-family:var(--fmono);}
+.lat-na{color:var(--mut);font-family:var(--fmono);}
+.details{font-size:.72rem;color:var(--mut);font-family:var(--fmono);}
+.empty{padding:2.5rem;text-align:center;color:var(--mut);font-size:.82rem;}
+
+/* History row */
+.avail-bar{display:flex;align-items:center;gap:.6rem;}
+.bar{flex:1;height:3px;background:var(--bor);border-radius:2px;}
+.bar-fill{height:100%;border-radius:2px;}
+.bar-fill.ok{background:var(--grn);}
+.bar-fill.warn{background:var(--ylw);}
+.bar-fill.bad{background:var(--red);}
+
+@media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr);} th,td{padding:.6rem .8rem;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">
+      <h1>💱 API MONITOR — FRANKFURTER</h1>
+      <p>api.frankfurter.app · Testing as Code · {{ history|length }} run(s) enregistré(s)</p>
+    </div>
+    <div class="actions">
+      <a href="/health" class="btn btn-outline">🩺 /health</a>
+      <a href="/export" class="btn btn-outline">⬇ Export JSON</a>
+      <a href="/run" class="btn btn-primary">▶ Lancer un run</a>
+    </div>
+  </header>
+
+  <!-- KPIs du dernier run -->
+  {% if last %}
+  {% set s = last.summary %}
+  <div class="kpis">
+    <div class="kpi blue">
+      <div class="kpi-lbl">Tests</div>
+      <div class="kpi-val">{{ s.total }}</div>
+      <div class="kpi-sub">dans la suite</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-lbl">Réussis</div>
+      <div class="kpi-val">{{ s.passed }}</div>
+      <div class="kpi-sub">dernier run</div>
+    </div>
+    <div class="kpi {% if s.failed > 0 %}red{% else %}green{% endif %}">
+      <div class="kpi-lbl">Échoués</div>
+      <div class="kpi-val">{{ s.failed }}</div>
+      <div class="kpi-sub">dernier run</div>
+    </div>
+    <div class="kpi yellow">
+      <div class="kpi-lbl">Latence moy.</div>
+      <div class="kpi-val">{% if s.latency_ms_avg %}{{ s.latency_ms_avg|int }}{% else %}—{% endif %}</div>
+      <div class="kpi-sub">ms (avg)</div>
+    </div>
+    <div class="kpi {% if s.availability >= 80 %}green{% elif s.availability >= 50 %}yellow{% else %}red{% endif %}">
+      <div class="kpi-lbl">Disponibilité</div>
+      <div class="kpi-val">{{ s.availability }}%</div>
+      <div class="kpi-sub">p95 = {% if s.latency_ms_p95 %}{{ s.latency_ms_p95|int }} ms{% else %}—{% endif %}</div>
+    </div>
+  </div>
+
+  <!-- Résultats détaillés du dernier run -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-title">📋 Dernier run</span>
+      <span class="sec-meta">{{ last.timestamp[:19]|replace("T"," ") }} UTC</span>
+    </div>
+    <table>
+      <thead><tr><th>Test</th><th>Statut</th><th>Latence</th><th>Détails</th></tr></thead>
+      <tbody>
+        {% for t in last.tests %}
+        <tr>
+          <td>{{ t.name }}</td>
+          <td><span class="pill {{ 'pass' if t.status == 'PASS' else 'fail' }}">{{ t.status }}</span></td>
+          <td>
+            {% if t.latency_ms %}
+              <span class="{{ 'lat-fast' if t.latency_ms < 500 else 'lat-slow' }}">{{ t.latency_ms|int }} ms</span>
+            {% else %}
+              <span class="lat-na">—</span>
+            {% endif %}
+          </td>
+          <td class="details">{{ t.details or '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="section">
+    <div class="empty">Aucun run effectué — cliquez sur <strong>▶ Lancer un run</strong></div>
+  </div>
+  {% endif %}
+
+  <!-- Historique -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-title">📊 Historique des runs</span>
+      <span class="sec-meta">20 derniers</span>
+    </div>
+    {% if history %}
+    <table>
+      <thead><tr><th>#</th><th>Timestamp</th><th>Réussis/Total</th><th>Disponibilité</th><th>Avg ms</th><th>P95 ms</th><th>Err. rate</th></tr></thead>
+      <tbody>
+        {% for run in history %}
+        {% set s = run.summary %}
+        {% set cls = 'ok' if s.availability >= 80 else 'warn' if s.availability >= 50 else 'bad' %}
+        <tr>
+          <td class="mono muted">{{ run.id }}</td>
+          <td class="mono muted">{{ run.timestamp[:19]|replace("T"," ") }}</td>
+          <td class="mono">{{ s.passed }}/{{ s.total }}</td>
+          <td>
+            <div class="avail-bar">
+              <div class="bar"><div class="bar-fill {{ cls }}" style="width:{{ s.availability }}%"></div></div>
+              <span class="mono" style="min-width:40px;font-size:.72rem;color:{% if s.availability>=80 %}var(--grn){% elif s.availability>=50 %}var(--ylw){% else %}var(--red){% endif %}">{{ s.availability }}%</span>
+            </div>
+          </td>
+          <td class="mono {% if s.latency_ms_avg and s.latency_ms_avg < 500 %}lat-fast{% else %}lat-slow{% endif %}">{% if s.latency_ms_avg %}{{ s.latency_ms_avg|int }}{% else %}—{% endif %}</td>
+          <td class="mono muted">{% if s.latency_ms_p95 %}{{ s.latency_ms_p95|int }}{% else %}—{% endif %}</td>
+          <td class="mono {% if s.error_rate > 0 %}lat-slow{% else %}lat-fast{% endif %}">{{ (s.error_rate * 100)|round(1) }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">Aucun historique disponible</div>
+    {% endif %}
+  </div>
+
+</div>
+</body>
+</html> 
