@@ -17,7 +17,7 @@ def consignes():
     return render_template('consignes.html')
 
 
-# ─── /run — Déclenche un run de tests ────────────────────────────────────────
+# ─── /run — Déclenche un  de tests ────────────────────────────────────────
 @app.route("/run", methods=["GET", "POST"])
 def run():
     result = run_all()
