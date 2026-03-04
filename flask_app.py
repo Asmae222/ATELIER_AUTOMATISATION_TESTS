@@ -14,7 +14,7 @@ init_db()  # Crée la base SQLite au démarrage
 # ─── Route du prof (consignes) ────────────────────────────────────────────────
 @app.get("/")
 def consignes():
-    return render_template('consignes.html')
+    return redirect(url_for("dashboard"))
 
 
 # ─── /run — Déclenche un git  de tests ────────────────────────────────────────
